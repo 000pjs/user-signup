@@ -1,60 +1,55 @@
-from flask import Flask, request, redirect
-import cgi
-import os
-import jinja2
+from flask import Flask, request, redirect, render_template 
 
-template_dir = os.path.join(os.path.dirname(__file__), 'templates')
-jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir), autoescape=True)
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
 
-@app.route('/signup')
-def display_signup_form():
-    template = jinja_env.get_template('signup-form.html')
-    return template.render()
-
-@app.route('/signup', methods=['POST'])
+@app.route('/signup', methods=['POST', 'GET'])
 def user_submission():
+   
+    if request.method == 'POST':
+    
+        username = request.form['username']
+        password = request.form['password']
+        verify_password = request.form['verify_password']
+        email = request.form['email']
 
-    username = request.form['user-name']
-    password = request.form['password']
-    verify_password = request.form['verify-password']
+        username_error = ''
+        password_error = ''
 
-    username_error = ''
-    password_error = ''
-
-    if username == '':
-        username_error = 'Please enter a username'
-        username = ''
-    else:
-        for char in username:
-            if char < 3 or char > 20 or char == '':
-                username_error = 'Your username must be between 4 - 19 characters & may not contain spaces.'
+        if ' ' in username or username == '':
+            username_error = 'invalid username.'
+        
+           
+        else:
+            if len(username) > 20 or len(username) < 3:
+                username_error = 'username must be between (4-19) characters.'
                 username = ''
+                
+        
+        if ' ' in password or password == '':
+            password_error = 'invalid password.' 
+            password = ''
+        elif verify_password == '':
+            password_error = 'please verify password' 
+        else:
+            if password != verify_password:
+                password_error = 'passwords do not match.'
+                password = ''
+                verify_password = ''
+               
+            
+        if not username_error and not password_error:
+            return render_template('welcome.html', username=username)
 
-    if password or varify_password == '':
-        password_error = 'Please enter a password.'
-        password = ''
+        else:  
+            return render_template('signup-form.html', username=username, username_error=username_error, password=password, verify_password=verify_password, password_error=password_error, email=email)
+ 
     else:
-        if password != verify_password:
-            password_error = 'Your passwords do not match.'
-            minutes = ''
-
-    if not username_error and not password_error:
-        return redirect('/welcome')
-    else:
-        template = jinja_env.get_template('signup_form.html')
-        return template.render(username_error=username_error,
-            password_error=password_error,
-            username=username)
+        return render_template('signup-form.html')
 
 
-@app.route("/welcome", methods=['POST'])
-def welcome():
-    username = request.form['user-name']
-    template = jinja_env.get_template('welcome.html')
-    return template.render(username=user-name)
 
 
-app.run()
+if __name__ == '__main__':
+    app.run()
